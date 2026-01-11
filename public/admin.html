@@ -4,287 +4,460 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard AR</title>
-    
+    <link rel="icon" href="/logo.png" type="image/png">
+    <script>
+    // Kalau tidak ada token login, tendang ke halaman login
+    if (!localStorage.getItem('admin_token')) {
+        window.location.href = 'login.html';
+    }
+
+    // Fungsi Logout
+    function logout() {
+        localStorage.removeItem('admin_token');
+        window.location.href = 'login.html';
+    }
+</script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f6f9;
-        }
-        .gradient-header {
-            background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px 15px 0 0;
-        }
-        .card-custom {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
-        }
-        .card-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
-        .btn-circle {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .form-control:focus {
-            box-shadow: none;
-            border-color: #4e54c8;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fc; color: #333; }
+        
+        /* Stats Cards */
+        .card-stat { border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: 0.3s; }
+        .card-stat:hover { transform: translateY(-3px); }
+        .icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+
+        /* Table Section */
+        .card-table { border: none; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.03); }
+        .table-custom th { font-weight: 600; color: #6c757d; border-bottom: 2px solid #f1f3f9; padding: 15px; font-size: 0.9rem; }
+        .table-custom td { vertical-align: middle; padding: 15px; border-bottom: 1px solid #f8f9fa; font-size: 0.95rem; }
+        .table-hover tbody tr:hover { background-color: #fcfdfe; }
+        .img-thumbnail-custom { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; background-color: #f1f3f9; }
+        .btn-add { background-color: #0f172a; color: white; border-radius: 8px; padding: 8px 20px; font-weight: 500; }
+        .btn-add:hover { background-color: #1e293b; color: white; }
+
+        /* Builder Styles */
+        .builder-area { background: #f8f9fc; border: 2px dashed #e2e8f0; border-radius: 10px; padding: 20px; min-height: 150px; }
+        .block-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.02); position: relative; }
+        .block-text { border-left-color: #3b82f6; }
+        .block-image { border-left-color: #10b981; }
+        .btn-remove-block { position: absolute; top: 10px; right: 10px; border: none; background: #fee2e2; color: #ef4444; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; }
+
+        /* Quill Editor Style Fix */
+        .ql-toolbar { border-radius: 8px 8px 0 0; background-color: #f8f9fa; border-color: #dee2e6 !important; }
+        .ql-container { border-radius: 0 0 8px 8px; border-color: #dee2e6 !important; background: white; height: auto; min-height: 120px; font-family: 'Inter', sans-serif; font-size: 16px; }
+        .preview-img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+    <nav class="navbar navbar-expand-lg bg-white border-bottom py-3 mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#">
-                <i class="fas fa-cube me-2"></i>AR Unity Manager
-            </a>
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+            <img src="/logo.png" alt="Logo" width="35" height="35" class="me-2 rounded">
+            <span>Hardware AR Admin</span>
+        </a>
+            <div class="d-flex align-items-center">
+    
+    <a href="cetak.html" class="btn btn-outline-primary btn-sm rounded-pill me-3 px-3 fw-bold">
+        <i class="fas fa-print me-2"></i>Cetak Kartu
+    </a>
+
+    <div class="text-end me-3">
+       <div class="fw-bold small text-primary">Halo, Admin! 👋</div>
+        <a href="#" onclick="logout()" class="text-danger small text-decoration-none fw-bold">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+        <i class="fas fa-user text-secondary"></i>
+    </div>
+</div>
         </div>
     </nav>
 
     <div class="container pb-5">
-        <div class="row">
-            
-            <div class="col-lg-4 mb-4">
-                <div class="card card-custom sticky-top" style="top: 20px; z-index: 100;">
-                    <div class="gradient-header text-center">
-                        <h5 class="mb-0 fw-bold" id="formTitle"><i class="fas fa-plus-circle me-2"></i>Tambah Data</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <form id="formInput">
-                            <input type="hidden" id="editId">
-
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">JUDUL KONTEN</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-0"><i class="fas fa-heading text-primary"></i></span>
-                                    <input type="text" id="judul" class="form-control bg-light border-0" placeholder="Ex: Mesin V8" required>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">DESKRIPSI / INFORMASI</label>
-                                <textarea id="informasi" class="form-control bg-light border-0" rows="6" placeholder="Tulis penjelasan detail disini..." required></textarea>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <button type="submit" id="btnSimpan" class="btn btn-primary fw-bold py-2 rounded-pill">
-                                    <i class="fas fa-save me-1"></i> SIMPAN DATA
-                                </button>
-                                <button type="button" id="btnBatal" class="btn btn-outline-secondary fw-bold py-2 rounded-pill d-none" onclick="batalEdit()">
-                                    <i class="fas fa-times me-1"></i> BATAL
-                                </button>
-                            </div>
-                        </form>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card card-stat p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="text-muted small fw-bold text-uppercase">Total Artikel</div><h2 class="fw-bold mb-0 mt-1" id="statTotal">0</h2></div>
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="fas fa-layer-group"></i></div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-8">
-                <h5 class="fw-bold mb-3 text-secondary"><i class="fas fa-list me-2"></i>Daftar Konten AR</h5>
-                
-                <div id="loading" class="text-center py-5 d-none">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2 text-muted">Memuat data...</p>
-                </div>
-
-                <div id="listData" class="row g-3">
+            <div class="col-md-4">
+                <div class="card card-stat p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="text-muted small fw-bold text-uppercase">Total Gambar</div><h2 class="fw-bold mb-0 mt-1" id="statImages">0</h2></div>
+                        <div class="icon-box bg-success bg-opacity-10 text-success"><i class="fas fa-image"></i></div>
                     </div>
+                </div>
             </div>
+            <div class="col-md-4">
+                <div class="card card-stat p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><div class="text-muted small fw-bold text-uppercase">Status API</div><h5 class="fw-bold mb-0 mt-1 text-success">Active</h5></div>
+                        <div class="icon-box bg-info bg-opacity-10 text-info"><i class="fas fa-wifi"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <h4 class="fw-bold mb-3">Data Konten AR</h4>
+        <div class="card card-table p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+                <div class="flex-grow-1" style="max-width: 400px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="searchInput" class="form-control bg-light border-start-0" placeholder="Cari judul artikel...">
+                    </div>
+                </div>
+                <button class="btn btn-add" onclick="openModalCreate()">
+                    <i class="fas fa-plus me-2"></i>Tambah Data
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-custom align-middle">
+                    <thead>
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="10%">Preview</th>
+                            <th width="30%">Nama / Judul</th>
+                            <th width="30%">Deskripsi Singkat</th>
+                            <th width="15%">Konten</th>
+                            <th width="10%" class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="6" class="text-center py-5">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
+    <div class="modal fade" id="modalEditor" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Editor Konten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="articleForm">
+                        <input type="hidden" id="editId"> <div class="mb-4">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Judul Utama</label>
+                            <input type="text" id="judulInput" name="judul" class="form-control form-control-lg fw-bold" placeholder="Misal: Jantung Manusia" required>
+                        </div>
+
+                        <label class="form-label fw-bold small text-uppercase text-muted">Susunan Builder</label>
+                        <div id="contentBuilderArea" class="builder-area mb-3">
+                            <div class="text-center text-muted py-4 empty-state">
+                                <i class="fas fa-layer-group mb-2 opacity-50"></i>
+                                <p class="small m-0">Konten kosong. Klik tombol di bawah untuk menambah.</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addTextBlock()">
+                                <i class="fas fa-plus me-1"></i> Teks (Rich)
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="addImageBlock()">
+                                <i class="fas fa-plus me-1"></i> Gambar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-add" id="btnSimpan" onclick="submitForm()">Simpan Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         const API_URL = '/api/data';
-        let allData = [];
+        const builderArea = document.getElementById('contentBuilderArea');
+        const emptyState = document.querySelector('.empty-state');
+        let allDataCache = [];
+        let modalInstance;
 
-        // 1. Fungsi Simpan / Update
-        document.getElementById('formInput').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const id = document.getElementById('editId').value;
-            const judul = document.getElementById('judul').value;
-            const informasi = document.getElementById('informasi').value;
-            
-            const method = id ? 'PUT' : 'POST';
-            const url = id ? `${API_URL}/${id}` : API_URL;
-            const actionText = id ? 'diupdate' : 'disimpan';
-
-            try {
-                // Tampilkan loading di tombol
-                const btn = document.getElementById('btnSimpan');
-                const oriText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-                btn.disabled = true;
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ judul, informasi })
-                });
-
-                const result = await response.json();
-                
-                // Balikin tombol
-                btn.innerHTML = oriText;
-                btn.disabled = false;
-
-                if (result.status) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: `Data berhasil ${actionText}.`,
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    batalEdit();
-                    loadData();
-                } else {
-                    Swal.fire('Gagal!', result.message, 'error');
-                }
-            } catch (error) {
-                Swal.fire('Error!', 'Gagal koneksi ke server.', 'error');
-            }
+        document.addEventListener("DOMContentLoaded", () => {
+            modalInstance = new bootstrap.Modal(document.getElementById('modalEditor'));
+            loadData();
         });
 
-        // 2. Fungsi Load Data
+        // 1. LOAD DATA KE TABEL
         async function loadData() {
-            const list = document.getElementById('listData');
-            const loading = document.getElementById('loading');
-            
-            list.innerHTML = '';
-            loading.classList.remove('d-none'); // Munculkan loading
-
+            const tbody = document.getElementById('tableBody');
             try {
                 const res = await fetch(API_URL);
                 const json = await res.json();
                 
-                loading.classList.add('d-none'); // Sembunyikan loading
-
                 if(json.status && json.data.length > 0) {
-                    allData = json.data;
-                    
-                    json.data.forEach(item => {
-                        list.innerHTML += `
-                            <div class="col-md-6">
-                                <div class="card card-custom card-item h-100 bg-white">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <span class="badge bg-light text-primary border">ID: ${item.id}</span>
-                                            <div>
-                                                <button class="btn btn-circle btn-outline-warning btn-sm me-1" onclick="mulaiEdit(${item.id})" title="Edit">
-                                                    <i class="fas fa-pen"></i>
-                                                </button>
-                                                <button class="btn btn-circle btn-outline-danger btn-sm" onclick="hapusData(${item.id})" title="Hapus">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <h5 class="card-title fw-bold text-dark">${item.judul}</h5>
-                                        <p class="card-text text-muted small" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                                            ${item.informasi}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>`;
-                    });
+                    allDataCache = json.data;
+                    renderTable(allDataCache);
+                    updateStats(json.data);
                 } else {
-                    list.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <img src="https://cdn-icons-png.flaticon.com/512/7486/7486777.png" width="100" class="mb-3 opacity-50">
-                            <h6 class="text-muted">Belum ada data tersimpan</h6>
-                        </div>`;
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">Belum ada data tersimpan.</td></tr>';
+                    updateStats([]);
                 }
             } catch (err) {
-                loading.classList.add('d-none');
-                list.innerHTML = `<div class="alert alert-danger w-100">Gagal mengambil data dari server.</div>`;
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Gagal mengambil data dari server.</td></tr>';
             }
         }
 
-        // 3. Fungsi Mulai Edit
-        function mulaiEdit(id) {
-            const data = allData.find(d => d.id === id);
-            if(data) {
-                document.getElementById('editId').value = data.id;
-                document.getElementById('judul').value = data.judul;
-                document.getElementById('informasi').value = data.informasi;
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
 
-                // Update UI
-                document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit me-2"></i>Edit Data';
-                const btnSimpan = document.getElementById('btnSimpan');
-                btnSimpan.innerHTML = '<i class="fas fa-check-circle me-1"></i> UPDATE DATA';
-                btnSimpan.classList.remove('btn-primary');
-                btnSimpan.classList.add('btn-warning', 'text-white');
+            data.forEach(item => {
+                const firstImg = item.konten.find(k => k.tipe === 'image');
+                const thumbnail = firstImg ? firstImg.url_lengkap : 'https://placehold.co/100x100?text=No+Img';
                 
-                document.getElementById('btnBatal').classList.remove('d-none');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const firstText = item.konten.find(k => k.tipe === 'text');
+                let desc = '-';
+                if(firstText) {
+                    let tmp = document.createElement("DIV");
+                    tmp.innerHTML = firstText.isi;
+                    desc = (tmp.textContent || tmp.innerText || "").substring(0, 60) + '...';
+                }
+
+                const countText = item.konten.filter(k => k.tipe === 'text').length;
+                const countImg = item.konten.filter(k => k.tipe === 'image').length;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="text-muted fw-bold">#${item.id}</td>
+                        <td><img src="${thumbnail}" class="img-thumbnail-custom" alt="thumb"></td>
+                        <td class="fw-bold text-dark">${item.judul}</td>
+                        <td class="text-muted small">${desc}</td>
+                        <td>
+                            <span class="badge bg-light text-primary border me-1"><i class="fas fa-font me-1"></i>${countText}</span>
+                            <span class="badge bg-light text-success border"><i class="fas fa-image me-1"></i>${countImg}</span>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-link text-warning p-0 me-2" onclick="editData(${item.id})" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-link text-danger p-0" onclick="hapusData(${item.id})" title="Hapus"><i class="far fa-trash-alt"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function updateStats(data) {
+            document.getElementById('statTotal').innerText = data.length;
+            let totalImages = 0;
+            data.forEach(item => totalImages += item.konten.filter(k => k.tipe === 'image').length);
+            document.getElementById('statImages').innerText = totalImages;
+        }
+
+        // 2. FORM BUILDER LOGIC
+        function openModalCreate() {
+            document.getElementById('articleForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('modalTitle').innerText = 'Tambah Artikel Baru';
+            builderArea.innerHTML = '';
+            builderArea.appendChild(emptyState);
+            emptyState.style.display = 'block';
+            modalInstance.show();
+            addTextBlock(); // Default 1 text block
+        }
+
+        // Logic EDIT
+        async function editData(id) {
+            try {
+                const res = await fetch(`${API_URL}/${id}`);
+                const json = await res.json();
+                
+                if(json.status) {
+                    const data = json.data;
+                    document.getElementById('editId').value = data.id;
+                    document.getElementById('judulInput').value = data.judul;
+                    document.getElementById('modalTitle').innerText = 'Edit Artikel #' + data.id;
+                    
+                    builderArea.innerHTML = '';
+                    emptyState.style.display = 'none';
+
+                    // Reconstruct content blocks
+                    data.konten.forEach(blok => {
+                        if(blok.tipe === 'text') {
+                            addTextBlock(blok.isi);
+                        } else if (blok.tipe === 'image') {
+                            addImageBlock(blok.url_lengkap, blok.isi);
+                        }
+                    });
+                    
+                    modalInstance.show();
+                }
+            } catch (e) { Swal.fire('Error', 'Gagal memuat data edit', 'error'); }
+        }
+
+        // Add Text Block (Quill)
+        function addTextBlock(content = '') {
+            if(emptyState) emptyState.style.display = 'none';
+            const id = 'quill-' + Date.now();
+            const div = document.createElement('div');
+            div.className = 'block-card block-text';
+            
+            div.innerHTML = `
+                <input type="hidden" name="blockType" value="text">
+                <input type="hidden" name="imgStatus" value="none"> <input type="hidden" name="oldImgName" value="">     <button type="button" class="btn-remove-block" onclick="removeBlock(this)"><i class="fas fa-times"></i></button>
+                <div class="small fw-bold text-primary mb-2"><i class="fas fa-paragraph me-1"></i> Editor Teks</div>
+                <div id="${id}" style="background:white;"></div>
+            `;
+            builderArea.appendChild(div);
+
+            const quill = new Quill(`#${id}`, {
+                theme: 'snow',
+                placeholder: 'Tulis deskripsi detail...',
+                modules: { toolbar: [['bold', 'italic', 'underline'], [{'list': 'ordered'}, {'list': 'bullet'}], ['clean']] }
+            });
+            
+            if(content) quill.root.innerHTML = content;
+            document.getElementById(id).quillRef = quill;
+        }
+
+        // Add Image Block (With Preview)
+        function addImageBlock(url = '', filename = '') {
+            if(emptyState) emptyState.style.display = 'none';
+            const div = document.createElement('div');
+            div.className = 'block-card block-image';
+            
+            let status = 'new';
+            let previewHTML = '';
+            
+            if(url) {
+                status = 'keep';
+                previewHTML = `
+                    <div class="d-flex align-items-center mb-2 gap-3 p-2 bg-light rounded border">
+                        <img src="${url}" class="preview-img">
+                        <div class="small text-muted text-truncate">File saat ini: <b>${filename}</b></div>
+                    </div>
+                `;
+            }
+
+            div.innerHTML = `
+                <input type="hidden" name="blockType" value="image">
+                <input type="hidden" name="imgStatus" value="${status}">
+                <input type="hidden" name="oldImgName" value="${filename}">
+                
+                <button type="button" class="btn-remove-block" onclick="removeBlock(this)"><i class="fas fa-times"></i></button>
+                <div class="small fw-bold text-success mb-2"><i class="fas fa-image me-1"></i> Gambar</div>
+                
+                ${previewHTML}
+                
+                <input type="file" name="images[]" class="form-control" accept="image/*" onchange="onFileChange(this)">
+                <div class="form-text small text-muted">Biarkan kosong jika tidak ingin mengubah gambar.</div>
+            `;
+            builderArea.appendChild(div);
+        }
+
+        // Detect file change in edit mode
+        window.onFileChange = function(input) {
+            const parent = input.parentElement;
+            const statusInput = parent.querySelector('input[name="imgStatus"]');
+            if(input.files.length > 0) {
+                statusInput.value = 'new';
+            } else {
+                const oldName = parent.querySelector('input[name="oldImgName"]').value;
+                statusInput.value = oldName ? 'keep' : 'new';
             }
         }
 
-        // 4. Fungsi Hapus Data (DELETE)
+        function removeBlock(btn) {
+            btn.parentElement.remove();
+            if(builderArea.children.length === 1) emptyState.style.display = 'block';
+        }
+
+        // 3. SUBMIT FORM (CREATE / UPDATE)
+        async function submitForm() {
+            const form = document.getElementById('articleForm');
+            if(!form.checkValidity()) { form.reportValidity(); return; }
+            
+            const blocks = builderArea.querySelectorAll('.block-card');
+            if(blocks.length === 0) { Swal.fire('Ups!', 'Konten masih kosong.', 'warning'); return; }
+
+            const btn = document.getElementById('btnSimpan');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; 
+            btn.disabled = true;
+
+            const formData = new FormData();
+            const editId = document.getElementById('editId').value;
+            formData.append('judul', document.getElementById('judulInput').value);
+
+            // Loop Content Blocks
+            blocks.forEach((block) => {
+                const type = block.querySelector('input[name="blockType"]').value;
+                formData.append('blockType', type);
+                formData.append('imgStatus', block.querySelector('input[name="imgStatus"]').value);
+                formData.append('oldImgName', block.querySelector('input[name="oldImgName"]').value);
+
+                if (type === 'text') {
+                    const editorDiv = block.querySelector('.ql-container');
+                    const html = editorDiv.quillRef.root.innerHTML;
+                    formData.append('textInput', html);
+                } else {
+                    formData.append('textInput', ''); // Dummy value
+                }
+            });
+
+            // Loop File Inputs
+            const fileInputs = builderArea.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                if(input.files[0]) formData.append('images[]', input.files[0]);
+            });
+
+            try {
+                const method = editId ? 'PUT' : 'POST';
+                const url = editId ? `${API_URL}/${editId}` : API_URL;
+
+                const response = await fetch(url, { method: method, body: formData });
+                const result = await response.json();
+
+                if (result.status) {
+                    modalInstance.hide();
+                    Swal.fire({icon: 'success', title: 'Berhasil', text: result.message, timer: 1500, showConfirmButton:false});
+                    loadData();
+                } else { 
+                    Swal.fire('Gagal!', result.message, 'error'); 
+                }
+            } catch (error) { 
+                Swal.fire('Error!', 'Koneksi ke server bermasalah.', 'error'); 
+            } finally { 
+                btn.innerHTML = originalText; 
+                btn.disabled = false; 
+            }
+        }
+
         function hapusData(id) {
             Swal.fire({
-                title: 'Yakin hapus data?',
-                text: "Data ID " + id + " akan hilang permanen!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal'
+                title: 'Hapus Data?', text: "Tidak bisa dikembalikan.", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus'
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    try {
-                        const response = await fetch(`${API_URL}/${id}`, {
-                            method: 'DELETE'
-                        });
-                        const res = await response.json();
-
-                        if (res.status) {
-                            Swal.fire('Terhapus!', 'Data berhasil dihapus.', 'success');
-                            loadData(); // Refresh
-                            // Jika sedang edit data yang dihapus, batalkan edit
-                            if(document.getElementById('editId').value == id) batalEdit();
-                        } else {
-                            Swal.fire('Gagal!', res.message, 'error');
-                        }
-                    } catch (err) {
-                        Swal.fire('Error!', 'Gagal konek server.', 'error');
-                    }
+                    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                    loadData();
+                    Swal.fire('Terhapus', '', 'success');
                 }
             });
         }
 
-        // 5. Fungsi Batal Edit
-        function batalEdit() {
-            document.getElementById('formInput').reset();
-            document.getElementById('editId').value = "";
-
-            document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Tambah Data';
-            const btnSimpan = document.getElementById('btnSimpan');
-            btnSimpan.innerHTML = '<i class="fas fa-save me-1"></i> SIMPAN DATA';
-            btnSimpan.classList.add('btn-primary');
-            btnSimpan.classList.remove('btn-warning', 'text-white');
-
-            document.getElementById('btnBatal').classList.add('d-none');
-        }
-
-        loadData();
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            const keyword = e.target.value.toLowerCase();
+            const filtered = allDataCache.filter(item => item.judul.toLowerCase().includes(keyword));
+            renderTable(filtered);
+        });
     </script>
-
 </body>
 </html>

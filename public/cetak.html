@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional AR Card Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #4f46e5; --secondary: #818cf8; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+        .font-heading { font-family: 'Outfit', sans-serif; }
+        .card-template { width: 340px; height: 520px; position: relative; background: white; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .header-stripe { background: linear-gradient(135deg, var(--primary), var(--secondary)); height: 8px; width: 100%; }
+        .tech-line { position: absolute; background: var(--primary); opacity: 0.1; z-index: 0; }
+        .viewfinder-corner { position: absolute; width: 25px; height: 25px; border: 3px solid var(--primary); z-index: 20; }
+        .vf-tl { top:0; left:0; border-right:0; border-bottom:0; border-radius:8px 0 0 0; }
+        .vf-tr { top:0; right:0; border-left:0; border-bottom:0; border-radius:0 8px 0 0; }
+        .vf-bl { bottom:0; left:0; border-right:0; border-top:0; border-radius:0 0 0 8px; }
+        .vf-br { bottom:0; right:0; border-left:0; border-top:0; border-radius:0 0 8px 0; }
+        .color-btn { width: 32px; height: 32px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+        .color-input-wrapper { position: relative; width: 32px; height: 32px; border-radius: 8px; overflow: hidden; border: 2px solid #cbd5e1; }
+        .color-input-wrapper input { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; border: none; }
+        .bg-dots { background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px); background-size: 20px 20px; }
+        .preview-wrapper { transform-origin: center center; transition: transform 0.3s; }
+        @media (max-width: 1024px) { .preview-wrapper { transform: scale(0.85); } }
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body > *:not(#print-batch):not(#print-area) { display: none !important; }
+            .sidebar-ui, .preview-bg { display: none !important; }
+            body { background: white; height: 100vh; margin: 0; padding: 0; }
+            body.printing-batch #print-batch { display: grid !important; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; width: 210mm; height: 297mm; padding: 10mm; gap: 10mm; position: absolute; top: 0; left: 0; background: white; }
+            body.printing-batch .queued-card { transform: none !important; box-shadow: none !important; border: 1px solid #ccc !important; margin: auto !important; width: 90mm !important; height: 130mm !important; page-break-inside: avoid; }
+            body.printing-batch #print-area { display: none !important; }
+            body:not(.printing-batch) #print-area { display: flex !important; justify-content: center; align-items: center; height: 100vh; width: 100%; position: absolute; top: 0; left: 0; background: white; }
+            body:not(.printing-batch) #marker-card { box-shadow: none !important; border: 1px solid #ccc !important; transform: scale(1) !important; }
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col md:flex-row text-slate-800">
+
+    <div class="sidebar-ui w-full md:w-[400px] bg-white border-r border-slate-200 h-full flex flex-col z-20 shadow-xl">
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+            <a href="admin.html" class="mb-4 inline-flex items-center text-xs font-bold text-slate-500 hover:text-indigo-600 transition">
+    <i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Dashboard
+</a>
+            <h1 class="text-2xl font-bold font-heading text-slate-900 flex items-center gap-2">
+                <span id="logo-bg" class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-sm"><i class="fa-solid fa-cube"></i></span>
+                AR Generator
+            </h1>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            <div class="space-y-4">
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Nama Aplikasi</label>
+                        <input type="text" id="input-app-name" value="AR VIEWER PRO" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none" oninput="updateMarker()">
+                    </div>
+                    <div class="w-20">
+                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">ID #</label>
+                        <input type="text" id="input-card-num" value="01" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-center outline-none" oninput="updateMarker()">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Tema Warna</label>
+                    <div class="flex gap-3 items-center">
+                        <div class="flex-1 flex gap-2">
+                            <div class="flex flex-col items-center"><div class="color-input-wrapper"><input type="color" id="custom-primary" value="#4f46e5" oninput="updateCustomColors()"></div></div>
+                            <div class="flex flex-col items-center"><div class="color-input-wrapper"><input type="color" id="custom-secondary" value="#818cf8" oninput="updateCustomColors()"></div></div>
+                        </div>
+                        <div class="w-px h-8 bg-slate-200"></div>
+                        <div class="flex gap-2">
+                            <div class="color-btn bg-indigo-600" onclick="setPreset('#4f46e5', '#818cf8')"></div>
+                            <div class="color-btn bg-rose-600" onclick="setPreset('#e11d48', '#fb7185')"></div>
+                            <div class="color-btn bg-emerald-600" onclick="setPreset('#059669', '#34d399')"></div>
+                            <div class="color-btn bg-slate-800" onclick="setPreset('#1e293b', '#94a3b8')"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Judul Komponen</label>
+                    <input type="text" id="input-title" value="MOTHERBOARD" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg font-heading font-bold text-lg outline-none uppercase" oninput="updateMarker()">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Deskripsi</label>
+                    <textarea id="input-sub" rows="2" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 outline-none resize-none" oninput="updateMarker()">Pindai untuk melihat detail AR</textarea>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Gambar Marker</label>
+                    <div class="relative group cursor-pointer">
+                        <input type="file" id="image-upload" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleImageUpload(event)">
+                        <div class="w-full h-32 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 group-hover:bg-indigo-50 transition">
+                            <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-2"></i>
+                            <span class="text-xs font-semibold text-slate-500">Klik untuk Ganti Gambar</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide"><i class="fa-solid fa-layer-group mr-1"></i> Antrean Cetak</h3>
+                    <span id="queue-count" class="text-[10px] font-bold bg-white text-slate-600 px-2 py-0.5 rounded-full border">0/4</span>
+                </div>
+                <div id="queue-list" class="space-y-1.5 min-h-[20px] mb-3"><p class="text-xs text-slate-400 italic text-center">Kosong.</p></div>
+                <div class="flex gap-2">
+                    <button onclick="addToQueue()" id="btn-add" class="flex-1 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg">+ Tambah</button>
+                    <button onclick="clearQueue()" class="px-3 bg-white border border-rose-200 text-rose-500 rounded-lg"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-slate-100 bg-slate-50/50 space-y-3">
+            <button onclick="downloadImage()" class="w-full py-2.5 bg-slate-800 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Download JPG</button>
+            <button onclick="handlePrint()" id="btn-print-action" class="w-full py-3 bg-white border-2 border-slate-200 text-slate-700 text-sm font-bold rounded-xl flex items-center justify-center gap-2"><i class="fa-solid fa-print"></i> Print (Satuan)</button>
+        </div>
+    </div>
+
+    <div class="preview-bg flex-1 bg-slate-100 relative flex items-center justify-center p-8 overflow-hidden">
+        <div class="preview-wrapper" id="print-area">
+            <div id="marker-card" class="card-template">
+                <div class="header-stripe"></div>
+                <div class="px-6 py-5 flex justify-between items-start z-10">
+                    <div>
+                        <span id="card-app-name" class="block text-xs font-bold text-slate-400 tracking-[0.2em] uppercase mb-1">AR VIEWER PRO</span>
+                        <div class="flex items-center gap-2 text-slate-800">
+                            <i class="fa-solid fa-cube transition-colors" id="header-icon" style="color: var(--primary);"></i>
+                            <span class="font-heading font-bold text-lg leading-none">AR Marker</span>
+                        </div>
+                    </div>
+                    <div class="text-right"><span id="card-num-display" class="block font-mono font-bold text-2xl text-slate-200 leading-none">01</span></div>
+                </div>
+                <div class="tech-line w-full h-32 top-10 right-0" style="clip-path: polygon(100% 0, 0% 100%, 100% 100%);"></div>
+                
+                <div class="flex-1 px-6 pb-2 relative flex flex-col justify-center">
+                    <div class="relative aspect-square w-full rounded-2xl bg-slate-50 flex items-center justify-center p-4 overflow-hidden border border-slate-100">
+                        <div class="viewfinder-corner vf-tl"></div><div class="viewfinder-corner vf-tr"></div>
+                        <div class="viewfinder-corner vf-bl"></div><div class="viewfinder-corner vf-br"></div>
+                        <img id="marker-image" crossorigin="anonymous" src="https://via.placeholder.com/400x400/f1f5f9/94a3b8?text=UPLOAD+IMAGE" class="relative z-10 max-w-full max-h-full object-contain drop-shadow-md rounded-lg">
+                        <div class="absolute inset-0 bg-dots opacity-30 z-0"></div>
+                    </div>
+                </div>
+
+                <div class="p-6 pt-2 z-10">
+                    <div class="border-t border-slate-100 pt-4">
+                        <h2 id="card-title" class="font-heading font-extrabold text-2xl text-slate-800 uppercase leading-tight mb-2">MOTHERBOARD</h2>
+                        <p id="card-sub" class="text-sm text-slate-500 font-medium leading-relaxed">Main Circuit Board</p>
+                    </div>
+                    <div class="mt-4 flex justify-between items-end">
+                        <div class="flex gap-1"><div class="w-8 h-1 rounded-full" style="background: var(--primary);"></div><div class="w-2 h-1 rounded-full" style="background: var(--secondary);"></div></div>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase" id="scan-badge" style="color: var(--primary); background: #f1f5f9;">Ready to Scan</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-batch" class="hidden"></div>
+
+    <script>
+        let primaryColor = '#4f46e5'; let secondaryColor = '#818cf8';
+        let printQueue = []; const MAX_QUEUE = 4;
+
+        // AUTO-FILL DATA DARI URL (PENTING!)
+        window.onload = function() {
+            updateCSSVars();
+            const params = new URLSearchParams(window.location.search);
+            const judul = params.get('judul');
+            const id = params.get('id');
+
+            if(judul) {
+                document.getElementById('input-title').value = judul;
+                document.getElementById('input-sub').value = "Pindai untuk melihat AR"; 
+            }
+            if(id) {
+                document.getElementById('input-card-num').value = id;
+            }
+            updateMarker();
+        }
+
+        function updateCustomColors() {
+            primaryColor = document.getElementById('custom-primary').value;
+            secondaryColor = document.getElementById('custom-secondary').value;
+            updateCSSVars(); updateMarker();
+        }
+        function setPreset(p, s) {
+            document.getElementById('custom-primary').value = p;
+            document.getElementById('custom-secondary').value = s;
+            updateCustomColors();
+        }
+        function updateCSSVars() {
+            document.documentElement.style.setProperty('--primary', primaryColor);
+            document.documentElement.style.setProperty('--secondary', secondaryColor);
+            document.getElementById('logo-bg').style.backgroundColor = primaryColor;
+            document.getElementById('btn-add').style.backgroundColor = primaryColor;
+        }
+        function updateMarker() {
+            document.getElementById('card-app-name').innerText = document.getElementById('input-app-name').value;
+            document.getElementById('card-num-display').innerText = document.getElementById('input-card-num').value.padStart(2,'0');
+            document.getElementById('card-title').innerText = document.getElementById('input-title').value;
+            document.getElementById('card-sub').innerText = document.getElementById('input-sub').value;
+            
+            document.getElementById('header-icon').style.color = primaryColor;
+            document.getElementById('scan-badge').style.color = primaryColor;
+            document.querySelectorAll('.viewfinder-corner').forEach(e => e.style.borderColor = primaryColor);
+        }
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) { document.getElementById('marker-image').src = evt.target.result; }
+                reader.readAsDataURL(file);
+            }
+        }
+        function addToQueue() {
+            if (printQueue.length >= MAX_QUEUE) { alert("Maksimal 4 kartu per halaman A4!"); return; }
+            const sourceCard = document.getElementById('marker-card');
+            const clonedCard = sourceCard.cloneNode(true);
+            clonedCard.removeAttribute('id'); clonedCard.classList.add('queued-card');
+            
+            // Fix Styles for Clone
+            clonedCard.querySelector('.header-stripe').style.background = `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`;
+            clonedCard.querySelectorAll('.viewfinder-corner').forEach(e => e.style.borderColor = primaryColor);
+            clonedCard.querySelector('#scan-badge').style.color = primaryColor;
+
+            printQueue.push({ element: clonedCard, title: document.getElementById('input-title').value, num: document.getElementById('input-card-num').value });
+            updateQueueUI();
+        }
+        function clearQueue() { if(confirm("Hapus semua?")) { printQueue = []; updateQueueUI(); } }
+        function removeFromQueue(idx) { printQueue.splice(idx, 1); updateQueueUI(); }
+        function updateQueueUI() {
+            const listEl = document.getElementById('queue-list');
+            const btn = document.getElementById('btn-print-action');
+            document.getElementById('queue-count').innerText = `${printQueue.length}/${MAX_QUEUE}`;
+            listEl.innerHTML = '';
+            if (printQueue.length === 0) {
+                listEl.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-2">Kosong.</p>';
+                btn.innerHTML = '<i class="fa-solid fa-print"></i> Print (Satuan)';
+                btn.style.backgroundColor = 'white'; btn.style.color = '#334155'; btn.style.border = '2px solid #e2e8f0';
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-layer-group"></i> Print Batch (${printQueue.length})`;
+                btn.style.backgroundColor = primaryColor; btn.style.color = 'white'; btn.style.border = 'none';
+                printQueue.forEach((item, i) => {
+                    listEl.innerHTML += `<div class="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-sm"><div class="flex items-center gap-2 overflow-hidden"><span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">#${item.num}</span><span class="text-xs font-semibold text-slate-700 truncate">${item.title}</span></div><button onclick="removeFromQueue(${i})" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark text-xs"></i></button></div>`;
+                });
+            }
+        }
+        function handlePrint() {
+            const batch = document.getElementById('print-batch');
+            if (printQueue.length > 0) {
+                document.body.classList.add('printing-batch');
+                batch.innerHTML = '';
+                printQueue.forEach(i => batch.appendChild(i.element));
+            } else { document.body.classList.remove('printing-batch'); }
+            setTimeout(() => { window.print(); }, 300);
+            window.onafterprint = () => { document.body.classList.remove('printing-batch'); };
+        }
+        function downloadImage() {
+            const card = document.getElementById('marker-card');
+            const shadow = card.style.boxShadow; card.style.boxShadow = 'none';
+            html2canvas(card, { scale: 3 }).then(c => {
+                const link = document.createElement('a');
+                link.download = `AR-Card-${document.getElementById('input-title').value}.jpg`;
+                link.href = c.toDataURL('image/jpeg', 0.9);
+                link.click();
+                card.style.boxShadow = shadow;
+            });
+        }
+    </script>
+</body>
+</html>
