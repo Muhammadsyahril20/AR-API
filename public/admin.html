@@ -223,7 +223,16 @@
 
             data.forEach(item => {
                 const firstImg = item.konten.find(k => k.tipe === 'image');
-                const thumbnail = firstImg ? firstImg.url_lengkap : 'https://placehold.co/100x100?text=No+Img';
+                // Cek apakah 'isi' mengandung data base64 atau URL biasa
+let imgSource = 'https://placehold.co/100x100?text=No+Img';
+
+if (firstImg) {
+    // Kalau base64, pakai 'isi'. Kalau masih file lama (ngrok), pakai 'url_lengkap' (jika ada)
+    // Tapi karena index.js baru tidak kirim url_lengkap, kita prioritaskan 'isi'
+    imgSource = firstImg.isi; 
+}
+
+const thumbnail = imgSource;
                 
                 const firstText = item.konten.find(k => k.tipe === 'text');
                 let desc = '-';
